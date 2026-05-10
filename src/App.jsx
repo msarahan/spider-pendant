@@ -1,20 +1,20 @@
-import { useState, useMemo } from “react”;
+import { useState, useMemo } from "react";
 
-const BG      = “#F7F4EF”;
-const PANEL   = “#FFFFFF”;
-const BORDER  = “#D6CEBF”;
-const INK     = “#1A1410”;
-const INK2    = “#4A3F30”;
-const INK3    = “#8A7A64”;
-const ACCENT  = “#C0390F”;
-const WARN    = “#A05800”;
-const SUCCESS = “#1E7A32”;
-const BLUE    = “#1A5FA8”;
-const RING_COLORS = [”#1A5FA8”,”#C05A10”,”#267A3A”,”#7A1A8A”,”#8A6A10”,”#10607A”];
+const BG      = "#F7F4EF";
+const PANEL   = "#FFFFFF";
+const BORDER  = "#D6CEBF";
+const INK     = "#1A1410";
+const INK2    = "#4A3F30";
+const INK3    = "#8A7A64";
+const ACCENT  = "#C0390F";
+const WARN    = "#A05800";
+const SUCCESS = "#1E7A32";
+const BLUE    = "#1A5FA8";
+const RING_COLORS = ["#1A5FA8","#C05A10","#267A3A","#7A1A8A","#8A6A10","#10607A"];
 
 function fmtFt(v) {
-if (!isFinite(v)) return “—”;
-const sign = v < 0 ? “−” : “”;
+if (!isFinite(v)) return "—";
+const sign = v < 0 ? "−" : "";
 const abs = Math.abs(v);
 const tot = Math.round(abs * 12);
 const ft = Math.floor(tot / 12), inch = tot % 12;
@@ -22,7 +22,7 @@ if (ft === 0) return `${sign}${inch}"`;
 if (inch === 0) return `${sign}${ft}'`;
 return `${sign}${ft}' ${inch}"`;
 }
-function fmtIn(v) { if (!isFinite(v)) return “—”; return `${(v * 12).toFixed(1)}"`; }
+function fmtIn(v) { if (!isFinite(v)) return "—"; return `${(v * 12).toFixed(1)}"`; }
 
 function catenarySag(L, D) {
 // Solve 2c·sinh(D/2c) = L for catenary parameter c using bisection.
@@ -73,7 +73,7 @@ const sagT = cp * (Math.cosh(D / (2 * cp)) - Math.cosh(lx / cp));
 const ry  = ry1 + t * Dy + sagT;                        // chord y + sag (downward)
 return `${sX(rx).toFixed(1)},${sY(ry).toFixed(1)}`;
 });
-return `M${pts[0]} ` + pts.slice(1).map(p => `L${p}`).join(” “);
+return `M${pts[0]} ` + pts.slice(1).map(p => `L${p}`).join(" ");
 }
 
 // Build a subdivided catenary SVG path by splitting [rx1,ry1]→[rx2,ry2] into N equal segments.
@@ -93,7 +93,7 @@ segL, sX, sY
 
 let _id = 0;
 function makeRing(o = {}) {
-return { id: ++_id, count: 6, radius: 2, drop: 1.5, socketH: 0.5, segments: 1, …o };
+return { id: ++_id, count: 6, radius: 2, drop: 1.5, socketH: 0.5, segments: 1, ...o };
 }
 
 function deriveRing(ring, ceilingH, cordLength, bulbH) {
@@ -126,13 +126,13 @@ segSpan,
 };
 }
 
-const mono = { fontFamily: “‘Courier New’, Courier, monospace” };
-const sans = { fontFamily: “system-ui, -apple-system, sans-serif” };
+const mono = { fontFamily: "'Courier New', Courier, monospace" };
+const sans = { fontFamily: "system-ui, -apple-system, sans-serif" };
 
 function SectionHead({ title }) {
 return (
-<div style={{ fontSize: 11, fontWeight: 700, color: INK3, letterSpacing: 2, textTransform: “uppercase”,
-marginBottom: 10, marginTop: 4, borderBottom: `1px solid ${BORDER}`, paddingBottom: 5, …sans }}>
+<div style={{ fontSize: 11, fontWeight: 700, color: INK3, letterSpacing: 2, textTransform: "uppercase",
+marginBottom: 10, marginTop: 4, borderBottom: `1px solid ${BORDER}`, paddingBottom: 5, ...sans }}>
 {title}
 </div>
 );
@@ -141,14 +141,14 @@ marginBottom: 10, marginTop: 4, borderBottom: `1px solid ${BORDER}`, paddingBott
 function SliderField({ label, value, setValue, min, max, step, fmt, sub }) {
 return (
 <div style={{ marginBottom: 12 }}>
-<div style={{ display: “flex”, justifyContent: “space-between”, alignItems: “baseline”, marginBottom: 2 }}>
-<span style={{ fontSize: 13, color: INK2, fontWeight: 600, …sans }}>{label}</span>
-<span style={{ fontSize: 16, color: INK, fontWeight: 700, …mono }}>{fmt ? fmt(value) : value}</span>
+<div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 2 }}>
+<span style={{ fontSize: 13, color: INK2, fontWeight: 600, ...sans }}>{label}</span>
+<span style={{ fontSize: 16, color: INK, fontWeight: 700, ...mono }}>{fmt ? fmt(value) : value}</span>
 </div>
-{sub && <div style={{ fontSize: 11, color: INK3, marginBottom: 3, …sans }}>{sub}</div>}
-<input type=“range” min={min} max={max} step={step} value={value}
+{sub && <div style={{ fontSize: 11, color: INK3, marginBottom: 3, ...sans }}>{sub}</div>}
+<input type="range" min={min} max={max} step={step} value={value}
 onChange={e => setValue(parseFloat(e.target.value))}
-style={{ width: “100%”, accentColor: BLUE, cursor: “pointer” }} />
+style={{ width: "100%", accentColor: BLUE, cursor: "pointer" }} />
 </div>
 );
 }
@@ -159,16 +159,16 @@ const disabled = delta > 0 ? value >= max : value <= min;
 return (
 <button onClick={() => !disabled && onChange(Math.min(max, Math.max(min, value + delta)))}
 style={{ width: 30, height: 30, border: `1.5px solid ${BORDER}`, borderRadius: 4,
-background: disabled ? “#F0EBE2” : PANEL, color: disabled ? INK3 : INK,
-fontSize: 18, fontWeight: 700, cursor: disabled ? “default” : “pointer”,
-display: “flex”, alignItems: “center”, justifyContent: “center”, …sans }}>
-{delta > 0 ? “+” : “−”}
+background: disabled ? "#F0EBE2" : PANEL, color: disabled ? INK3 : INK,
+fontSize: 18, fontWeight: 700, cursor: disabled ? "default" : "pointer",
+display: "flex", alignItems: "center", justifyContent: "center", ...sans }}>
+{delta > 0 ? "+" : "−"}
 </button>
 );
 };
 return (
-<div style={{ display: “flex”, alignItems: “center”, gap: 8 }}>
-<Btn delta={-1} /><span style={{ fontSize: 22, fontWeight: 800, color: INK, minWidth: 36, textAlign: “center”, …mono }}>{value}</span><Btn delta={1} />
+<div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+<Btn delta={-1} /><span style={{ fontSize: 22, fontWeight: 800, color: INK, minWidth: 36, textAlign: "center", ...mono }}>{value}</span><Btn delta={1} />
 </div>
 );
 }
@@ -176,19 +176,19 @@ return (
 function StatCard({ label, value, note, warn, warnAmber }) {
 const clr = warn ? ACCENT : warnAmber ? WARN : SUCCESS;
 return (
-<div style={{ background: warn ? “#FEF0EC” : warnAmber ? “#FFF8EC” : “#F0F7F1”, border: `2px solid ${clr}`, borderRadius: 6, padding: “10px 14px” }}>
-<div style={{ fontSize: 11, fontWeight: 700, color: clr, letterSpacing: 1, …sans }}>{label}</div>
-<div style={{ fontSize: 20, fontWeight: 800, color: clr, …mono, marginTop: 2 }}>{value}</div>
-{note && <div style={{ fontSize: 11, color: clr, fontWeight: 600, …sans }}>{note}</div>}
+<div style={{ background: warn ? "#FEF0EC" : warnAmber ? "#FFF8EC" : "#F0F7F1", border: `2px solid ${clr}`, borderRadius: 6, padding: "10px 14px" }}>
+<div style={{ fontSize: 11, fontWeight: 700, color: clr, letterSpacing: 1, ...sans }}>{label}</div>
+<div style={{ fontSize: 20, fontWeight: 800, color: clr, ...mono, marginTop: 2 }}>{value}</div>
+{note && <div style={{ fontSize: 11, color: clr, fontWeight: 600, ...sans }}>{note}</div>}
 </div>
 );
 }
 
 function ClearancePill({ value, warn }) {
 return (
-<span style={{ display: “inline-block”, padding: “3px 10px”, borderRadius: 4,
-background: warn ? “#FEF0EC” : “#EBF5ED”, border: `1.5px solid ${warn ? ACCENT : SUCCESS}`,
-fontSize: 14, fontWeight: 800, color: warn ? ACCENT : SUCCESS, …mono }}>
+<span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 4,
+background: warn ? "#FEF0EC" : "#EBF5ED", border: `1.5px solid ${warn ? ACCENT : SUCCESS}`,
+fontSize: 14, fontWeight: 800, color: warn ? ACCENT : SUCCESS, ...mono }}>
 {fmtFt(value)}
 </span>
 );
@@ -201,44 +201,44 @@ const sagWarn    = !derived.taut && derived.sagLowestFromFloor < 7;
 const cordWarn   = derived.taut || derived.slack < 0.01;
 const maxDrop    = Math.max(0.25, ceilingH - 0.25);
 return (
-<div style={{ background: PANEL, border: `2px solid ${color}`, borderRadius: 8, marginBottom: 12, overflow: “hidden” }}>
-<div style={{ background: color, padding: “8px 14px”, display: “flex”, alignItems: “center”, gap: 10, flexWrap: “wrap” }}>
-<span style={{ fontSize: 15, fontWeight: 800, color: “#fff”, …sans, letterSpacing: 1 }}>RING {idx + 1}</span>
-<span style={{ fontSize: 12, color: “rgba(255,255,255,0.75)”, …sans }}>r = {fmtFt(ring.radius)} · ↓ {fmtFt(ring.drop)}{(ring.segments ?? 1) > 1 ? ` · ${ring.segments} seg` : “”}</span>
-<div style={{ marginLeft: “auto”, display: “flex”, gap: 8, alignItems: “center”, flexWrap: “wrap” }}>
-<span style={{ fontSize: 11, color: “rgba(255,255,255,0.8)”, …sans }}>socket clr</span>
+<div style={{ background: PANEL, border: `2px solid ${color}`, borderRadius: 8, marginBottom: 12, overflow: "hidden" }}>
+<div style={{ background: color, padding: "8px 14px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+<span style={{ fontSize: 15, fontWeight: 800, color: "#fff", ...sans, letterSpacing: 1 }}>RING {idx + 1}</span>
+<span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", ...sans }}>r = {fmtFt(ring.radius)} · ↓ {fmtFt(ring.drop)}{(ring.segments ?? 1) > 1 ? ` · ${ring.segments} seg` : ""}</span>
+<div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+<span style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", ...sans }}>socket clr</span>
 <ClearancePill value={derived.socketBotFromFloor} warn={socketWarn} />
-<span style={{ fontSize: 11, color: “rgba(255,255,255,0.8)”, …sans }}>cord sag clr</span>
+<span style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", ...sans }}>cord sag clr</span>
 <ClearancePill value={derived.sagLowestFromFloor} warn={sagWarn} />
-{cordWarn && <span style={{ fontSize: 12, fontWeight: 700, color: “#FFD0C0”, …sans }}>⚠ TAUT</span>}
+{cordWarn && <span style={{ fontSize: 12, fontWeight: 700, color: "#FFD0C0", ...sans }}>⚠ TAUT</span>}
 </div>
-<button onClick={() => onRemove(ring.id)} style={{ background: “rgba(255,255,255,0.2)”, border: “1.5px solid rgba(255,255,255,0.5)”,
-color: “#fff”, borderRadius: 4, cursor: “pointer”, fontSize: 13, fontWeight: 700, padding: “2px 9px”, marginLeft: 8, …sans }}>✕</button>
+<button onClick={() => onRemove(ring.id)} style={{ background: "rgba(255,255,255,0.2)", border: "1.5px solid rgba(255,255,255,0.5)",
+color: "#fff", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 700, padding: "2px 9px", marginLeft: 8, ...sans }}>✕</button>
 </div>
-<div style={{ padding: “12px 16px” }}>
-<div style={{ display: “grid”, gridTemplateColumns: “auto auto 1fr”, gap: “0 24px”, alignItems: “start” }}>
+<div style={{ padding: "12px 16px" }}>
+<div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: "0 24px", alignItems: "start" }}>
 <div>
-<div style={{ fontSize: 13, color: INK2, fontWeight: 600, marginBottom: 6, …sans }}>Sockets in ring</div>
+<div style={{ fontSize: 13, color: INK2, fontWeight: 600, marginBottom: 6, ...sans }}>Sockets in ring</div>
 <Stepper value={ring.count} onChange={val => onUpdate(ring.id, { count: val })} />
 </div>
 <div>
-<div style={{ fontSize: 13, color: INK2, fontWeight: 600, marginBottom: 6, …sans }}>Cord segments</div>
+<div style={{ fontSize: 13, color: INK2, fontWeight: 600, marginBottom: 6, ...sans }}>Cord segments</div>
 <Stepper value={ring.segments ?? 1} onChange={val => onUpdate(ring.id, { segments: val })} min={1} max={8} />
 </div>
 <div>
-<SliderField label=”Radius” value={ring.radius} setValue={set(“radius”)} min={0.5} max={12} step={0.5} fmt={fmtFt} sub=”Horiz. reach from canopy center” />
-<SliderField label=”Vertical drop” value={ring.drop} setValue={set(“drop”)} min={0.25} max={maxDrop} step={0.25} fmt={fmtFt} sub=”Canopy bottom → socket top” />
-<SliderField label=”Socket height” value={ring.socketH} setValue={set(“socketH”)} min={0.25} max={1.5} step={0.25} fmt={fmtFt} />
+<SliderField label="Radius" value={ring.radius} setValue={set("radius")} min={0.5} max={12} step={0.5} fmt={fmtFt} sub="Horiz. reach from canopy center" />
+<SliderField label="Vertical drop" value={ring.drop} setValue={set("drop")} min={0.25} max={maxDrop} step={0.25} fmt={fmtFt} sub="Canopy bottom → socket top" />
+<SliderField label="Socket height" value={ring.socketH} setValue={set("socketH")} min={0.25} max={1.5} step={0.25} fmt={fmtFt} />
 </div>
 </div>
-<div style={{ display: “flex”, gap: 20, flexWrap: “wrap”, borderTop: `1px solid ${BORDER}`, paddingTop: 8, marginTop: 4, fontSize: 12, color: INK2, …mono }}>
-{[[“arc radius”, fmtFt(ring.radius)],
-  [“arc slack”, cordWarn ? “TAUT” : fmtIn(derived.slack)],
-  [(ring.segments ?? 1) > 1 ? “sag/seg” : “sag”, fmtIn(derived.sag)],
-  ...((ring.segments ?? 1) > 1 ? [[“segments”, String(ring.segments)]] : []),
-  [“arc spacing”, fmtFt((2 * Math.PI * ring.radius) / ring.count)]
+<div style={{ display: "flex", gap: 20, flexWrap: "wrap", borderTop: `1px solid ${BORDER}`, paddingTop: 8, marginTop: 4, fontSize: 12, color: INK2, ...mono }}>
+{[["arc radius", fmtFt(ring.radius)],
+  ["arc slack", cordWarn ? "TAUT" : fmtIn(derived.slack)],
+  [(ring.segments ?? 1) > 1 ? "sag/seg" : "sag", fmtIn(derived.sag)],
+  ...((ring.segments ?? 1) > 1 ? [["segments", String(ring.segments)]] : []),
+  ["arc spacing", fmtFt((2 * Math.PI * ring.radius) / ring.count)]
 ].map(([k, v]) => (
-<span key={k}><span style={{ color: INK3 }}>{k}: </span><span style={{ fontWeight: 700, color: cordWarn && k === “slack” ? ACCENT : INK }}>{v}</span></span>
+<span key={k}><span style={{ color: INK3 }}>{k}: </span><span style={{ fontWeight: 700, color: cordWarn && k === "slack" ? ACCENT : INK }}>{v}</span></span>
 ))}
 </div>
 </div>
@@ -257,9 +257,9 @@ makeRing({ count: 6, radius: 1.5, drop: 1,   socketH: 0.5 }),
 ]);
 const MIN_CLR = 7;
 
-const addRing    = () => { const maxR = rings.length ? Math.max(…rings.map(r => r.radius)) + 1 : 2; setRings(rs => […rs, makeRing({ radius: Math.min(maxR, 8), count: 4, drop: 1.5 })]); };
+const addRing    = () => { const maxR = rings.length ? Math.max(...rings.map(r => r.radius)) + 1 : 2; setRings(rs => [...rs, makeRing({ radius: Math.min(maxR, 8), count: 4, drop: 1.5 })]); };
 const removeRing = (id)      => setRings(rs => rs.filter(r => r.id !== id));
-const updateRing = (id, pat) => setRings(rs => rs.map(r => r.id === id ? { …r, …pat } : r));
+const updateRing = (id, pat) => setRings(rs => rs.map(r => r.id === id ? { ...r, ...pat } : r));
 
 const derived = useMemo(() => rings.map(r => deriveRing(r, ceilingH, cordLength, bulbH)), [rings, ceilingH, cordLength, bulbH]);
 
@@ -268,13 +268,13 @@ const budgetDelta     = assignedSockets - socketBudget;
 const budgetOk        = budgetDelta === 0;
 const anyLampWarn     = derived.some(d => d.socketBotFromFloor < MIN_CLR);
 const anyCordWarn     = derived.some(d => !d.taut && d.sagLowestFromFloor < MIN_CLR);
-const minSocketClr    = rings.length ? Math.min(…derived.map(d => d.socketBotFromFloor)) : Infinity;
-const minSagClr       = rings.length ? Math.min(…derived.map(d => d.sagLowestFromFloor)) : Infinity;
+const minSocketClr    = rings.length ? Math.min(...derived.map(d => d.socketBotFromFloor)) : Infinity;
+const minSagClr       = rings.length ? Math.min(...derived.map(d => d.sagLowestFromFloor)) : Infinity;
 
 // SVG
 const SVG_W = 600, SVG_H = 310, PL = 52, PR = 20, PT = 22, PB = 28;
 const dW = SVG_W - PL - PR, dH = SVG_H - PT - PB;
-const maxR = Math.max(1, …rings.map(r => r.radius));
+const maxR = Math.max(1, ...rings.map(r => r.radius));
 const cx0  = PL + dW / 2;
 const sY   = y => PT + (y / ceilingH) * dH;
 const sX   = x => cx0 + (x / (maxR * 1.25)) * (dW / 2);
@@ -284,14 +284,13 @@ const TV = 260, tvcx = TV / 2 + 8, tvcy = TV / 2 + 8;
 const tvScale = (TV / 2 - 22) / (maxR * 1.15);
 
 return (
-<div style={{ minHeight: “100vh”, background: BG, color: INK, …sans }}>
-<div style={{ background: BLUE, padding: “14px 28px”, display: “flex”, alignItems: “center”, gap: 16 }}>
-<div style={{ fontSize: 20, fontWeight: 800, color: “#fff”, letterSpacing: 2 }}>SPIDER PENDANT</div>
-<div style={{ fontSize: 13, color: “rgba(255,255,255,0.7)”, letterSpacing: 1 }}>MULTI-RING LAYOUT CALCULATOR</div>
-<div style={{ marginLeft: “auto”, fontSize: 11, color: “rgba(255,255,255,0.55)”, …mono }}>IMPERIAL · FT & IN</div>
+<div style={{ minHeight: "100vh", background: BG, color: INK, ...sans }}>
+<div style={{ background: BLUE, padding: "14px 28px", display: "flex", alignItems: "center", gap: 16 }}>
+<div style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: 2 }}>SPIDER PENDANT</div>
+<div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", letterSpacing: 1 }}>MULTI-RING LAYOUT CALCULATOR</div>
+<div style={{ marginLeft: "auto", fontSize: 11, color: "rgba(255,255,255,0.55)", ...mono }}>IMPERIAL · FT & IN</div>
 </div>
 
-```
   <div style={{ display: "flex", maxWidth: 1200, margin: "0 auto" }}>
     <div style={{ width: 440, flexShrink: 0, padding: "16px 18px", borderRight: `2px solid ${BORDER}`, overflowY: "auto", maxHeight: "calc(100vh - 54px)", background: "#F2EDE5" }}>
 
@@ -561,7 +560,6 @@ return (
     </div>
   </div>
 </div>
-```
 
 );
 }
