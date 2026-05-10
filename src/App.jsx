@@ -76,34 +76,53 @@ return `${sX(rx).toFixed(1)},${sY(ry).toFixed(1)}`;
 return `M${pts[0]} ` + pts.slice(1).map(p => `L${p}`).join(” “);
 }
 
+// Build a subdivided catenary SVG path by splitting [rx1,ry1]→[rx2,ry2] into N equal segments.
+// Each segment receives totalL/N of cord; intermediate endpoints are ceiling attachment nodes.
+function subdivCatenaryPath(rx1, ry1, rx2, ry2, totalL, sX, sY, N = 1) {
+const n = Math.max(1, Math.round(N));
+const segL = totalL / n;
+return Array.from({ length: n }, (_, k) => {
+const t0 = k / n, t1 = (k + 1) / n;
+return catenaryPathFt(
+rx1 + t0 * (rx2 - rx1), ry1 + t0 * (ry2 - ry1),
+rx1 + t1 * (rx2 - rx1), ry1 + t1 * (ry2 - ry1),
+segL, sX, sY
+);
+}).join(" ");
+}
+
 let _id = 0;
 function makeRing(o = {}) {
-return { id: ++_id, count: 6, radius: 2, drop: 1.5, socketH: 0.5, …o };
+return { id: ++_id, count: 6, radius: 2, drop: 1.5, socketH: 0.5, segments: 1, …o };
 }
 
 function deriveRing(ring, ceilingH, cordLength, bulbH) {
-const { radius, drop, socketH } = ring;
+const { radius, drop, socketH, segments = 1 } = ring;
 const fixtureH = socketH + bulbH;
 // The single cord runs from the ceiling hub, arcs out to the ring radius, then
 // drops straight down by `drop` to the socket top.
 // Arc cord available = cordLength - drop (the drop uses that much of the cord).
-// Arc span = radius (horizontal distance).
-// If arcCord < radius the cord is too short and pulls taut.
+// With `segments` divisions, each sub-span is radius/N wide with arcCord/N of cord.
+// Sag per segment = catenarySag(arcCord/N, radius/N) — scales down by N vs. undivided.
 const arcCord  = cordLength - drop;
+const segSpan  = radius / segments;
+const segCord  = arcCord / segments;
 const taut     = arcCord <= radius + 1e-4;
-const availArc = Math.max(arcCord, radius + 1e-4);
-const { sag }  = taut ? { sag: 0 } : catenarySag(availArc, radius);
+const availSeg = Math.max(segCord, segSpan + 1e-4);
+const { sag }  = taut ? { sag: 0 } : catenarySag(availSeg, segSpan);
 const socketBotFromFloor = ceilingH - (drop + fixtureH);
+const availLen = Math.max(arcCord, radius + 1e-4);
 return {
 socketBotFromFloor,
 socketBotFromCeil: drop + fixtureH,
 fixtureH,
 arcCord,
-slack: Math.max(0, arcCord - radius),   // spare arc cord = what creates the sag
+slack: Math.max(0, arcCord - radius),   // total spare arc cord (undivided)
 taut,
-sag,
-sagLowestFromFloor: ceilingH - sag,     // arc lowest point below ceiling
-availLen: availArc,
+sag,                                    // per-segment sag = worst-case sag depth
+sagLowestFromFloor: ceilingH - sag,
+availLen,
+segSpan,
 };
 }
 
@@ -185,7 +204,7 @@ return (
 <div style={{ background: PANEL, border: `2px solid ${color}`, borderRadius: 8, marginBottom: 12, overflow: “hidden” }}>
 <div style={{ background: color, padding: “8px 14px”, display: “flex”, alignItems: “center”, gap: 10, flexWrap: “wrap” }}>
 <span style={{ fontSize: 15, fontWeight: 800, color: “#fff”, …sans, letterSpacing: 1 }}>RING {idx + 1}</span>
-<span style={{ fontSize: 12, color: “rgba(255,255,255,0.75)”, …sans }}>r = {fmtFt(ring.radius)} · ↓ {fmtFt(ring.drop)}</span>
+<span style={{ fontSize: 12, color: “rgba(255,255,255,0.75)”, …sans }}>r = {fmtFt(ring.radius)} · ↓ {fmtFt(ring.drop)}{(ring.segments ?? 1) > 1 ? ` · ${ring.segments} seg` : “”}</span>
 <div style={{ marginLeft: “auto”, display: “flex”, gap: 8, alignItems: “center”, flexWrap: “wrap” }}>
 <span style={{ fontSize: 11, color: “rgba(255,255,255,0.8)”, …sans }}>socket clr</span>
 <ClearancePill value={derived.socketBotFromFloor} warn={socketWarn} />
@@ -197,19 +216,28 @@ return (
 color: “#fff”, borderRadius: 4, cursor: “pointer”, fontSize: 13, fontWeight: 700, padding: “2px 9px”, marginLeft: 8, …sans }}>✕</button>
 </div>
 <div style={{ padding: “12px 16px” }}>
-<div style={{ display: “grid”, gridTemplateColumns: “auto 1fr”, gap: “0 24px”, alignItems: “start” }}>
+<div style={{ display: “grid”, gridTemplateColumns: “auto auto 1fr”, gap: “0 24px”, alignItems: “start” }}>
 <div>
 <div style={{ fontSize: 13, color: INK2, fontWeight: 600, marginBottom: 6, …sans }}>Sockets in ring</div>
 <Stepper value={ring.count} onChange={val => onUpdate(ring.id, { count: val })} />
 </div>
 <div>
-<SliderField label=“Radius” value={ring.radius} setValue={set(“radius”)} min={0.5} max={12} step={0.5} fmt={fmtFt} sub=“Horiz. reach from canopy center” />
-<SliderField label=“Vertical drop” value={ring.drop} setValue={set(“drop”)} min={0.25} max={maxDrop} step={0.25} fmt={fmtFt} sub=“Canopy bottom → socket top” />
-<SliderField label=“Socket height” value={ring.socketH} setValue={set(“socketH”)} min={0.25} max={1.5} step={0.25} fmt={fmtFt} />
+<div style={{ fontSize: 13, color: INK2, fontWeight: 600, marginBottom: 6, …sans }}>Cord segments</div>
+<Stepper value={ring.segments ?? 1} onChange={val => onUpdate(ring.id, { segments: val })} min={1} max={8} />
+</div>
+<div>
+<SliderField label=”Radius” value={ring.radius} setValue={set(“radius”)} min={0.5} max={12} step={0.5} fmt={fmtFt} sub=”Horiz. reach from canopy center” />
+<SliderField label=”Vertical drop” value={ring.drop} setValue={set(“drop”)} min={0.25} max={maxDrop} step={0.25} fmt={fmtFt} sub=”Canopy bottom → socket top” />
+<SliderField label=”Socket height” value={ring.socketH} setValue={set(“socketH”)} min={0.25} max={1.5} step={0.25} fmt={fmtFt} />
 </div>
 </div>
 <div style={{ display: “flex”, gap: 20, flexWrap: “wrap”, borderTop: `1px solid ${BORDER}`, paddingTop: 8, marginTop: 4, fontSize: 12, color: INK2, …mono }}>
-{[[“arc radius”, fmtFt(ring.radius)], [“arc slack”, cordWarn ? “TAUT” : fmtIn(derived.slack)], [“sag”, fmtIn(derived.sag)], [“arc spacing”, fmtFt((2 * Math.PI * ring.radius) / ring.count)]].map(([k, v]) => (
+{[[“arc radius”, fmtFt(ring.radius)],
+  [“arc slack”, cordWarn ? “TAUT” : fmtIn(derived.slack)],
+  [(ring.segments ?? 1) > 1 ? “sag/seg” : “sag”, fmtIn(derived.sag)],
+  ...((ring.segments ?? 1) > 1 ? [[“segments”, String(ring.segments)]] : []),
+  [“arc spacing”, fmtFt((2 * Math.PI * ring.radius) / ring.count)]
+].map(([k, v]) => (
 <span key={k}><span style={{ color: INK3 }}>{k}: </span><span style={{ fontWeight: 700, color: cordWarn && k === “slack” ? ACCENT : INK }}>{v}</span></span>
 ))}
 </div>
@@ -364,21 +392,27 @@ return (
                  - straight drop from (±radius,0) down by ring.drop to socket top */}
             {rings.map((ring, idx) => {
               const d = derived[idx], color = RING_COLORS[idx % RING_COLORS.length];
+              const segs = ring.segments ?? 1;
               const socketTopY = sY(ring.drop);
               const socketBotY = sY(ring.drop + d.fixtureH);
               const sagW       = !d.taut && d.sagLowestFromFloor < MIN_CLR;
               return [-1, 1].map(side => {
                 const sockX   = sX(side * ring.radius);
-                const arcPath = catenaryPathFt(0, 0, side * ring.radius, 0, d.availLen, sX, sY);
-                const sagDotX = sX(side * ring.radius * 0.5);
-                const sagDotY = sY(d.sag);
+                const arcPath = subdivCatenaryPath(0, 0, side * ring.radius, 0, d.availLen, sX, sY, segs);
                 return (
                   <g key={`${idx}-${side}`}>
-                    {/* Catenary arc at ceiling */}
+                    {/* Subdivided catenary arc(s) at ceiling */}
                     <path d={arcPath} stroke={color} strokeWidth={2.5} fill="none" />
-                    {!d.taut && d.sag > 0.01 && (
-                      <circle cx={sagDotX} cy={sagDotY} r={4} fill={sagW ? ACCENT : color} />
-                    )}
+                    {/* Per-segment sag dots */}
+                    {!d.taut && d.sag > 0.01 && Array.from({ length: segs }, (_, k) => (
+                      <circle key={k} cx={sX(side * (k + 0.5) * d.segSpan)} cy={sY(d.sag)}
+                        r={4} fill={sagW ? ACCENT : color} />
+                    ))}
+                    {/* Intermediate ceiling attachment nodes */}
+                    {segs > 1 && Array.from({ length: segs - 1 }, (_, k) => (
+                      <circle key={k} cx={sX(side * (k + 1) * d.segSpan)} cy={ceilSvgY}
+                        r={5} fill={PANEL} stroke={color} strokeWidth={2} />
+                    ))}
                     {/* Straight drop from arc endpoint to socket */}
                     <line x1={sockX} y1={ceilSvgY} x2={sockX} y2={socketTopY}
                       stroke={color} strokeWidth={2.5} />
@@ -432,9 +466,15 @@ return (
                   <text x={tvcx + tvR + 3} y={tvcy} dominantBaseline="middle" fill={color} fontSize={11} fontWeight="700" fontFamily="Courier New">{fmtFt(ring.radius)}</text>
                   {angles.map((a, i) => {
                     const sx = tvcx + Math.cos(a) * tvR, sy = tvcy + Math.sin(a) * tvR;
+                    const segs = ring.segments ?? 1;
                     return (
                       <g key={i}>
                         <line x1={tvcx} y1={tvcy} x2={sx} y2={sy} stroke={color} strokeWidth={1.5} strokeOpacity={0.5} />
+                        {segs > 1 && Array.from({ length: segs - 1 }, (_, k) => {
+                          const frac = (k + 1) / segs;
+                          return <circle key={k} cx={tvcx + Math.cos(a) * tvR * frac} cy={tvcy + Math.sin(a) * tvR * frac}
+                            r={3} fill={PANEL} stroke={color} strokeWidth={1.5} />;
+                        })}
                         <circle cx={sx} cy={sy} r={6} fill={color} fillOpacity={0.2} stroke={color} strokeWidth={2} />
                         <circle cx={sx} cy={sy} r={2.5} fill={color} />
                       </g>
@@ -479,7 +519,7 @@ return (
           <table style={{ width: "100%", borderCollapse: "collapse", ...mono }}>
             <thead>
               <tr style={{ background: "#F0EBE2" }}>
-                {["Ring","Count","Radius","Drop","Slack","Sag","Socket Clr","Cord Sag Clr"].map(h => (
+                {["Ring","Count","Radius","Drop","Segs","Slack","Sag/Seg","Socket Clr","Cord Sag Clr"].map(h => (
                   <th key={h} style={{ textAlign: h === "Ring" ? "left" : "right", padding: "8px 12px", fontSize: 11, fontWeight: 700, color: INK2, borderBottom: `2px solid ${BORDER}`, whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -497,6 +537,7 @@ return (
                       </span>
                     </td>
                     {[{ v: ring.count, w: false }, { v: fmtFt(ring.radius), w: false }, { v: fmtFt(ring.drop), w: false },
+                      { v: ring.segments ?? 1, w: false },
                       { v: cw ? "TAUT" : fmtIn(d.slack), w: cw }, { v: fmtIn(d.sag), w: false }, { v: fmtFt(d.socketBotFromFloor), w: sw }, { v: fmtFt(d.sagLowestFromFloor), w: sagW }
                     ].map(({ v, w }, ci) => (
                       <td key={ci} style={{ textAlign: "right", padding: "9px 12px", fontSize: 14, fontWeight: w ? 800 : 600, color: w ? ACCENT : INK, background: w ? "#FEF0EC" : "inherit" }}>{v}</td>
