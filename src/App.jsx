@@ -93,7 +93,7 @@ segL, sX, sY
 
 let _id = 0;
 function makeRing(o = {}) {
-return { id: ++_id, count: 6, radius: 2, drop: 1.5, socketH: 0.5, segments: 1, ...o };
+return { id: ++_id, count: 6, radius: 2, drop: 1.5, socketH: 0.5, segments: 1, rotation: 0, ...o };
 }
 
 function deriveRing(ring, ceilingH, cordLength, bulbH) {
@@ -204,7 +204,7 @@ return (
 <div style={{ background: PANEL, border: `2px solid ${color}`, borderRadius: 8, marginBottom: 12, overflow: "hidden" }}>
 <div style={{ background: color, padding: "8px 14px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
 <span style={{ fontSize: 15, fontWeight: 800, color: "#fff", ...sans, letterSpacing: 1 }}>RING {idx + 1}</span>
-<span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", ...sans }}>r = {fmtFt(ring.radius)} · ↓ {fmtFt(ring.drop)}{(ring.segments ?? 1) > 1 ? ` · ${ring.segments} seg` : ""}</span>
+<span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", ...sans }}>r = {fmtFt(ring.radius)} · ↓ {fmtFt(ring.drop)}{(ring.segments ?? 1) > 1 ? ` · ${ring.segments} seg` : ""}{(ring.rotation ?? 0) !== 0 ? ` · ${ring.rotation}°` : ""}</span>
 <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
 <span style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", ...sans }}>socket clr</span>
 <ClearancePill value={derived.socketBotFromFloor} warn={socketWarn} />
@@ -229,6 +229,7 @@ color: "#fff", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 700
 <SliderField label="Radius" value={ring.radius} setValue={set("radius")} min={0.5} max={12} step={0.5} fmt={fmtFt} sub="Horiz. reach from canopy center" />
 <SliderField label="Vertical drop" value={ring.drop} setValue={set("drop")} min={0.25} max={maxDrop} step={0.25} fmt={fmtFt} sub="Canopy bottom → socket top" />
 <SliderField label="Socket height" value={ring.socketH} setValue={set("socketH")} min={0.25} max={1.5} step={0.25} fmt={fmtFt} />
+<SliderField label="Ring rotation" value={ring.rotation ?? 0} setValue={set("rotation")} min={0} max={359} step={1} fmt={v => `${v}°`} sub="Rotate all sockets around the ring" />
 </div>
 </div>
 <div style={{ display: "flex", gap: 20, flexWrap: "wrap", borderTop: `1px solid ${BORDER}`, paddingTop: 8, marginTop: 4, fontSize: 12, color: INK2, ...mono }}>
@@ -236,7 +237,8 @@ color: "#fff", borderRadius: 4, cursor: "pointer", fontSize: 13, fontWeight: 700
   ["arc slack", cordWarn ? "TAUT" : fmtIn(derived.slack)],
   [(ring.segments ?? 1) > 1 ? "sag/seg" : "sag", fmtIn(derived.sag)],
   ...((ring.segments ?? 1) > 1 ? [["segments", String(ring.segments)]] : []),
-  ["arc spacing", fmtFt((2 * Math.PI * ring.radius) / ring.count)]
+  ["arc spacing", fmtFt((2 * Math.PI * ring.radius) / ring.count)],
+  ...((ring.rotation ?? 0) !== 0 ? [["rotation", `${ring.rotation}°`]] : [])
 ].map(([k, v]) => (
 <span key={k}><span style={{ color: INK3 }}>{k}: </span><span style={{ fontWeight: 700, color: cordWarn && k === "slack" ? ACCENT : INK }}>{v}</span></span>
 ))}
@@ -458,7 +460,8 @@ return (
             <rect x={8} y={8} width={TV} height={TV} fill="none" stroke={BORDER} strokeWidth={1.5} rx={3} />
             {rings.map((ring, idx) => {
               const color = RING_COLORS[idx % RING_COLORS.length], tvR = ring.radius * tvScale;
-              const angles = Array.from({ length: ring.count }, (_, i) => (2 * Math.PI * i) / ring.count);
+              const rotRad = (ring.rotation ?? 0) * Math.PI / 180;
+              const angles = Array.from({ length: ring.count }, (_, i) => (2 * Math.PI * i) / ring.count + rotRad);
               return (
                 <g key={ring.id}>
                   <circle cx={tvcx} cy={tvcy} r={tvR} fill="none" stroke={color} strokeOpacity={0.3} strokeWidth={1} strokeDasharray="5,4" />
